@@ -6,7 +6,10 @@ const QRCode = require("qrcode");
 const nodemailer = require("nodemailer");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+
 
 // Middleware
 app.use(express.json());
@@ -25,13 +28,15 @@ if (!fs.existsSync(QRS_DIR)) {
 }
 
 // 🔥 Configurar transporte de correo (Gmail + contraseña de aplicación)
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "atomofestmail@gmail.com",   // <-- PON AQUÍ TU GMAIL
-    pass: "ehslorunkreiewhc",     // <-- PON AQUÍ TU APP PASSWORD (NO TU CLAVE NORMAL)
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
   },
 });
+
 
 // Utilidades DB
 function readDB() {
@@ -61,7 +66,7 @@ async function registrarInvitado(nombre, email) {
   console.log("✔ Nuevo invitado guardado:", nuevoRegistro);
 
   // Generar QR con link al ticket
-  const qrData = `http://localhost:${PORT}/ticket/${nuevoRegistro.id}`;
+  const qrData = `${BASE_URL}/ticket/${nuevoRegistro.id}`;
   const qrPath = path.join(QRS_DIR, `${nuevoRegistro.id}.png`);
 
   await QRCode.toFile(qrPath, qrData);
