@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Registro AtomoFest</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    label {
+      font-weight: 600;
+    }
+    input {
+      padding: 8px 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: none;
+      background: #111827;
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    #mensaje {
+      margin-top: 16px;
+      min-height: 20px;
+    }
+    #qr-container {
+      margin-top: 24px;
+      text-align: center;
+      display: none;
+    }
+    #qr-container img {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Registro al evento</h1>
+
+  <form id="registro-form">
+    <div>
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" name="nombre" required />
+    </div>
+    <div>
+      <label for="email">Correo electrónico</label>
+      <input type="email" id="email" name="email" required />
+    </div>
+    <button type="submit">Registrarme</button>
+  </form>
+
+  <div id="mensaje"></div>
+
+  <div id="qr-container">
+    <h2>Tu pase con QR</h2>
+    <p>Guarda este código o la imagen para entrar al evento.</p>
+    <img id="qr-img" alt="QR del ticket" />
+  </div>
+
+  <script>
+    const form = document.getElementById("registro-form");
+    const mensaje = document.getElementById("mensaje");
+    const qrContainer = document.getElementById("qr-container");
+    const qrImg = document.getElementById("qr-img");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      mensaje.textContent = "";
+      qrContainer.style.display = "none";
+
+      const nombre = document.getElementById("nombre").value.trim();
+      const email = document.getElementById("email").value.trim();
+
+      if (!nombre || !email) {
+        mensaje.textContent = "Por favor completa nombre y correo.";
+        return;
+      }
+
+      const submitBtn = form.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Enviando...";
+
+      try {
+        const resp = await fetch("/api/registrar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ nombre, email }),
+        });
+
+        const data = await resp.json();
+
+        if (!data.ok) {
+          mensaje.textContent = data.error || "Error al registrar.";
+        } else {
+          mensaje.textContent = "Registro exitoso. ¡Revisa tu QR abajo!";
+          if (data.qr) {
+            qrImg.src = data.qr;
+            qrContainer.style.display = "block";
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        mensaje.textContent = "Ocurrió un error de conexión.";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Registrarme";
+      }
+    });
+  </script>
+</body>
+</html>
